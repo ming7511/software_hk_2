@@ -126,7 +126,7 @@ SLOT_X = (WIDTH - SLOT_CAPACITY * TILE_SIZE) // 2
 SLOT_Y = HEIGHT - TILE_SIZE - 20  # 槽区位置调整到最底部
 
 # 定义游戏板尺寸
-LAYERS = 3  # 层数，可以根据需要调整
+LAYERS = 1  # 层数，可以根据需要调整
 
 # 定义复活次数
 revive_used = False
@@ -415,6 +415,7 @@ def return_from_ad():
 
 # 游戏结束界面
 
+# 游戏结束界面
 def draw_game_over(message, score, difficulty):
     global running
     # 停止背景音乐
@@ -423,16 +424,17 @@ def draw_game_over(message, score, difficulty):
     # 读取排行榜
     scores = read_scores(difficulty)
 
-    # 添加当前分数并排序，保留前 5 名
+    # 添加当前分数并排序，保留前 3 名
     scores.append(score)
-    scores = sorted(scores, reverse=True)[:5]  # 只保留最高的5个分数
+    scores = sorted(scores, reverse=True)[:3]  # 只保留最高的3个分数
 
     # 保存更新后的排行榜
     save_scores(scores, difficulty)
 
     # 根据游戏结果选择背景图片并播放对应的音效
     if message == "你赢了！":
-        victory_sound.play()
+        pygame.mixer.music.stop()  # 停止背景音乐，防止重叠
+        victory_sound.play()  # 播放胜利音效
         screen.blit(game_win_bg_image, (0, 0))
     else:
         defeat_sound.play()
@@ -447,7 +449,7 @@ def draw_game_over(message, score, difficulty):
     draw_scoreboard(scores)
 
     # 倒计时逻辑
-    countdown_time = 3  # 倒计时 3 秒
+    countdown_time = 6  # 倒计时 6 秒
     font = pygame.font.Font(font_path, 30)  # 设置倒计时字体
     start_ticks = pygame.time.get_ticks()  # 获取倒计时开始时间
 
@@ -465,7 +467,7 @@ def draw_game_over(message, score, difficulty):
 
         # 计算剩余时间
         seconds_passed = (pygame.time.get_ticks() - start_ticks) // 1000
-        countdown_time = 7 - seconds_passed  # 3秒倒计时
+        countdown_time = 6 - seconds_passed  # 3秒倒计时
 
         # 显示倒计时
         countdown_text = font.render(f"返回主菜单 {countdown_time} 秒", True, WHITE)
@@ -476,8 +478,9 @@ def draw_game_over(message, score, difficulty):
         # 等待一帧
         pygame.time.Clock().tick(30)
 
-    # 重新播放背景音乐
-    pygame.mixer.music.play(-1)
+    # 胜利音效播放完成后，不再播放背景音乐
+    if message != "你赢了！":
+        pygame.mixer.music.play(-1)  # 如果是失败，重新播放背景音乐
 
     # 返回主菜单
     return_to_menu()
@@ -506,7 +509,7 @@ def start_game(layers, difficulty):
     boards = generate_boards()
     game_over = False
     score = 0  # 初始化得分
-    timer = 60  # 定义倒计时
+    timer = 120  # 定义倒计时
     start_ticks = pygame.time.get_ticks()  # 获取游戏开始的时间
 
     while not game_over:
